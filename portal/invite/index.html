@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal klienta | Aktywacja konta</title>
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=16">
+    <link rel="stylesheet" href="/portal/portal.css?v=1">
+</head>
+<body class="portal-page">
+    <main class="portal-auth">
+        <section class="portal-auth__card" aria-labelledby="portal-invite-heading">
+            <div class="portal-auth__panel portal-auth__panel--brand">
+                <div>
+                    <span class="portal-card__eyebrow">Aktywacja</span>
+                    <h1 id="portal-invite-heading" class="portal-card__title" style="font-size: clamp(2.3rem, 4vw, 3.4rem); margin-bottom: 1rem;">Ustaw dane logowania.</h1>
+                    <p class="portal-card__subtitle">Po aktywacji otrzymasz natychmiastowy dostęp do projektu, checklisty, plików i komunikacji z zespołem.</p>
+                </div>
+                <div class="portal-card">
+                    <h2 class="portal-card__title">Co zyskujesz</h2>
+                    <ul class="portal-list">
+                        <li class="portal-list__item">Jedno miejsce na wszystkie materiały i brief.</li>
+                        <li class="portal-list__item">Aktualny status projektu i etapy prac.</li>
+                        <li class="portal-list__item">Akceptacje, feedback i faktury pod ręką.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="portal-auth__panel">
+                <a href="/portal/login/" class="btn btn--secondary" style="margin-bottom: 1.5rem;">Wróć do logowania</a>
+
+                <h2 class="portal-card__title">Aktywuj konto</h2>
+                <p class="portal-card__subtitle">Uzupełnij dane i ustaw hasło. Link z zaproszenia musi być nadal ważny.</p>
+
+                <form class="portal-form" id="inviteForm">
+                    <div class="portal-field">
+                        <label for="name">Imię i nazwisko</label>
+                        <input id="name" name="name" type="text" autocomplete="name" required placeholder="Anna Nowak">
+                    </div>
+                    <div class="portal-field">
+                        <label for="password">Hasło</label>
+                        <input id="password" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="Minimum 8 znaków">
+                    </div>
+                    <div class="portal-field">
+                        <label for="passwordRepeat">Powtórz hasło</label>
+                        <input id="passwordRepeat" name="passwordRepeat" type="password" autocomplete="new-password" required minlength="8" placeholder="Powtórz hasło">
+                    </div>
+                    <div class="portal-flash" id="inviteFlash" aria-live="polite"></div>
+                    <button type="submit" class="btn btn--primary btn--large">Aktywuj konto</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { apiFetch, clearFlash, setFlash } from '/portal/shared.js';
+
+        const form = document.getElementById('inviteForm');
+        const flash = document.getElementById('inviteFlash');
+        const params = new URL(window.location.href).searchParams;
+        const token = params.get('token');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            clearFlash(flash);
+
+            if (!token) {
+                setFlash(flash, 'Brakuje tokenu zaproszenia.', 'error');
+                return;
+            }
+
+            if (form.password.value !== form.passwordRepeat.value) {
+                setFlash(flash, 'Hasła nie są takie same.', 'error');
+                return;
+            }
+
+            try {
+                await apiFetch('/api/auth-accept-invite', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        token,
+                        name: form.name.value.trim(),
+                        password: form.password.value
+                    })
+                });
+                window.location.href = '/portal/';
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

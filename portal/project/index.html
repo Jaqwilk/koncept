@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal klienta | Projekt</title>
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=16">
+    <link rel="stylesheet" href="/portal/portal.css?v=1">
+</head>
+<body class="portal-page">
+    <div class="portal-shell">
+        <aside class="portal-sidebar">
+            <div class="portal-sidebar__brand">
+                <a href="/portal/">
+                    <span class="nav__logo-text">koncept</span>
+                    <span class="nav__logo-dot"></span>
+                </a>
+            </div>
+            <nav class="portal-nav">
+                <a class="portal-nav__link" href="/portal/"><span>Dashboard</span></a>
+                <a class="portal-nav__link is-active" href="#overview"><span>Workspace</span></a>
+                <a class="portal-nav__link" href="/portal/admin/" data-admin-only hidden><span>Panel admina</span></a>
+            </nav>
+            <div class="portal-sidebar__footer">
+                <div class="portal-sidebar__user">
+                    <div class="portal-sidebar__user-name" data-user-name>Użytkownik</div>
+                    <div class="portal-sidebar__user-role" data-user-role>Klient</div>
+                </div>
+                <button type="button" class="btn btn--primary btn--full" data-logout>Wyloguj</button>
+            </div>
+        </aside>
+
+        <main class="portal-main">
+            <div class="portal-topbar">
+                <div class="portal-topbar__content">
+                    <button type="button" class="btn btn--secondary portal-mobile-toggle" data-portal-menu-toggle aria-expanded="false">Menu</button>
+                    <span class="portal-card__eyebrow">Workspace projektu</span>
+                    <h1 id="projectTitle">Ładowanie projektu...</h1>
+                    <p id="projectSubtitle">Portal zbiera wszystkie materiały, feedback i decyzje projektowe w jednym miejscu.</p>
+                </div>
+                <div class="portal-topbar__actions">
+                    <a href="/portal/" class="btn btn--secondary">Wróć do dashboardu</a>
+                </div>
+            </div>
+
+            <section class="portal-card portal-card--hero" id="overviewHero"></section>
+
+            <div class="portal-tabs" role="tablist" aria-label="Zakładki projektu" style="margin-top: 1.5rem;">
+                <button type="button" class="portal-tab is-active" data-tab="overview" aria-selected="true">Overview</button>
+                <button type="button" class="portal-tab" data-tab="materials" aria-selected="false">Materials</button>
+                <button type="button" class="portal-tab" data-tab="timeline" aria-selected="false">Timeline</button>
+                <button type="button" class="portal-tab" data-tab="feedback" aria-selected="false">Feedback</button>
+                <button type="button" class="portal-tab" data-tab="messages" aria-selected="false">Messages</button>
+                <button type="button" class="portal-tab" data-tab="files" aria-selected="false">Files</button>
+                <button type="button" class="portal-tab" data-tab="invoices" aria-selected="false">Invoices</button>
+                <button type="button" class="portal-tab" data-tab="approvals" aria-selected="false">Approvals</button>
+            </div>
+
+            <div class="portal-grid">
+                <section class="portal-tab-panel is-active" data-tab-panel="overview">
+                    <div class="portal-split">
+                        <article class="portal-card">
+                            <div class="portal-collection__header">
+                                <div>
+                                    <h2 class="portal-card__title">Brief klienta</h2>
+                                    <p class="portal-helper">To brief, na którym opiera się projekt. Można go aktualizować w miarę rozwoju prac.</p>
+                                </div>
+                            </div>
+                            <form class="portal-form" id="briefForm">
+                                <input type="hidden" name="projectId">
+                                <div class="portal-form__row">
+                                    <div class="portal-field">
+                                        <label for="companyName">Nazwa firmy</label>
+                                        <input id="companyName" name="companyName" type="text">
+                                    </div>
+                                    <div class="portal-field">
+                                        <label for="targetAudience">Grupa docelowa</label>
+                                        <input id="targetAudience" name="targetAudience" type="text">
+                                    </div>
+                                </div>
+                                <div class="portal-form__row">
+                                    <div class="portal-field">
+                                        <label for="contactName">Osoba kontaktowa</label>
+                                        <input id="contactName" name="contactName" type="text">
+                                    </div>
+                                    <div class="portal-field">
+                                        <label for="contactEmail">E-mail kontaktowy</label>
+                                        <input id="contactEmail" name="contactEmail" type="email">
+                                    </div>
+                                </div>
+                                <div class="portal-form__row">
+                                    <div class="portal-field">
+                                        <label for="contactPhone">Telefon kontaktowy</label>
+                                        <input id="contactPhone" name="contactPhone" type="text">
+                                    </div>
+                                    <div class="portal-field">
+                                        <label for="businessAddress">Adres firmy</label>
+                                        <input id="businessAddress" name="businessAddress" type="text">
+                                    </div>
+                                </div>
+                                <div class="portal-field">
+                                    <label for="services">Usługi</label>
+                                    <input id="services" name="services" type="text" placeholder="np. strony www, SEO, branding">
+                                </div>
+                                <div class="portal-field">
+                                    <label for="desiredPages">Docelowe podstrony</label>
+                                    <input id="desiredPages" name="desiredPages" type="text" placeholder="np. Home, Oferta, O nas, Kontakt">
+                                </div>
+                                <div class="portal-field">
+                                    <label for="businessDescription">Opis firmy</label>
+                                    <textarea id="businessDescription" name="businessDescription"></textarea>
+                                </div>
+                                <div class="portal-field">
+                                    <label for="colorPreferences">Preferencje kolorystyczne</label>
+                                    <textarea id="colorPreferences" name="colorPreferences"></textarea>
+                                </div>
+                                <div class="portal-field">
+                                    <label for="inspirations">Inspiracje (oddziel przecinkami)</label>
+                                    <textarea id="inspirations" name="inspirations"></textarea>
+                                </div>
+                                <div class="portal-field">
+                                    <label for="additionalNotes">Dodatkowe notatki</label>
+                                    <textarea id="additionalNotes" name="additionalNotes"></textarea>
+                                </div>
+                                <div class="portal-flash" id="briefFlash"></div>
+                                <button type="submit" class="btn btn--primary">Zapisz brief</button>
+                            </form>
+                        </article>
+
+                        <article class="portal-card">
+                            <h2 class="portal-card__title">Checklist i milestone’y</h2>
+                            <p class="portal-helper">Checklistę możesz odhaczać ręcznie, ale portal uzupełnia ją też automatycznie po uploadach i zapisaniu briefu.</p>
+                            <div class="portal-list" id="taskChecklist"></div>
+                            <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid rgba(0,0,0,0.06);">
+                            <div class="portal-list" id="milestoneList"></div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="portal-tab-panel" data-tab-panel="materials">
+                    <div class="portal-split">
+                        <article class="portal-card">
+                            <div class="portal-collection__header">
+                                <div>
+                                    <h2 class="portal-card__title">Dodaj materiały</h2>
+                                    <p class="portal-helper">Obsługujemy wersjonowanie plików i komentarz przy uploadzie.</p>
+                                </div>
+                            </div>
+                            <form id="fileUploadForm" class="portal-form" enctype="multipart/form-data">
+                                <input type="hidden" name="projectId">
+                                <input type="hidden" name="versionGroup">
+                                <input type="hidden" name="replacedFileId">
+                                <div class="portal-form__row">
+                                    <div class="portal-field">
+                                        <label for="fileCategory">Kategoria</label>
+                                        <select id="fileCategory" name="category">
+                                            <option value="LOGO">Logo</option>
+                                            <option value="IMAGES">Images</option>
+                                            <option value="BRAND_ASSETS">Brand assets</option>
+                                            <option value="TEXT_CONTENT">Text content</option>
+                                            <option value="COMPANY_INFORMATION">Company information</option>
+                                            <option value="OTHER">Other files</option>
+                                            <option value="DELIVERABLE">Deliverable</option>
+                                        </select>
+                                    </div>
+                                    <div class="portal-field">
+                                        <label for="fileFolder">Folder</label>
+                                        <select id="fileFolder" name="folder">
+                                            <option value="MATERIALS">Materials</option>
+                                            <option value="DESIGN_FILES">Design files</option>
+                                            <option value="WEBSITE_ASSETS">Website assets</option>
+                                            <option value="DOCUMENTS">Documents</option>
+                                            <option value="DELIVERABLES">Deliverables</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="portal-field">
+                                    <label for="displayName">Nazwa pliku w portalu</label>
+                                    <input id="displayName" name="displayName" type="text" placeholder="np. logo-finalne.svg">
+                                </div>
+                                <div class="portal-field">
+                                    <label for="uploadComment">Komentarz do pliku</label>
+                                    <textarea id="uploadComment" name="comment" placeholder="Dodaj kontekst lub uwagi do pliku."></textarea>
+                                </div>
+                                <label class="portal-upload" id="uploadDropzone">
+                                    <div class="portal-upload__inner">
+                                        <strong>Przeciągnij plik tutaj lub kliknij, aby wybrać</strong>
+                                        <span class="portal-helper">Max. 25 MB. PNG, JPG, SVG, PDF, DOCX, XLSX i ZIP.</span>
+                                        <input id="materialFile" name="file" type="file" required hidden>
+                                    </div>
+                                </label>
+                                <p class="portal-helper" id="replaceHelper"></p>
+                                <div class="portal-flash" id="uploadFlash"></div>
+                                <button type="submit" class="btn btn--primary">Wyślij materiał</button>
+                            </form>
+                        </article>
+                        <article class="portal-card">
+                            <h2 class="portal-card__title">Pliki pogrupowane po wersjach</h2>
+                            <div class="portal-file-list" id="materialsList"></div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="portal-tab-panel" data-tab-panel="timeline">
+                    <article class="portal-card">
+                        <div class="portal-collection__header">
+                            <div>
+                                <h2 class="portal-card__title">Etapy projektu</h2>
+                                <p class="portal-helper">Zespół może aktualizować status etapu, a klient od razu widzi co dzieje się dalej.</p>
+                            </div>
+                        </div>
+                        <div class="portal-timeline" id="stageTimeline"></div>
+                    </article>
+                </section>
+
+                <section class="portal-tab-panel" data-tab-panel="feedback">
+                    <div class="portal-split">
+                        <article class="portal-card">
+                            <h2 class="portal-card__title">Dodaj feedback</h2>
+                            <form class="portal-form" id="feedbackForm">
+                                <input type="hidden" name="projectId">
+                                <div class="portal-field">
+                                    <label for="feedbackTitle">Tytuł</label>
+                                    <input id="feedbackTitle" name="title" type="text" required>
+                                </div>
+                                <div class="portal-field">
+                                    <label for="feedbackDeliverable">Deliverable / ekran</label>
+                                    <input id="feedbackDeliverable" name="deliverableLabel" type="text">
+                                </div>
+                                <div class="portal-field">
+                                    <label for="feedbackBody">Komentarz</label>
+                                    <textarea id="feedbackBody" name="body" required></textarea>
+                                </div>
+                                <div class="portal-flash" id="feedbackFlash"></div>
+                                <button type="submit" class="btn btn--primary">Dodaj feedback</button>
+                            </form>
+                        </article>
+                        <article class="portal-card">
+                            <h2 class="portal-card__title">Lista feedbacku</h2>
+                            <div class="portal-feedback-list" id="feedbackList"></div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="portal-tab-panel" data-tab-panel="messages">
+                    <div class="portal-split">
+                        <article class="portal-card">
+                            <h2 class="portal-card__title">Napisz wiadomość</h2>
+                            <form class="portal-form" id="messageForm">
+                                <input type="hidden" name="projectId">
+                                <div class="portal-field">
+                                    <label for="messageBody">Treść</label>
+                                    <textarea id="messageBody" name="body" required></textarea>
+                                </div>
+                                <div class="portal-field" data-admin-only hidden>
+                                    <label style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <input id="messageInternal" name="isInternal" type="checkbox">
+                                        <span>Notatka wewnętrzna (widoczna tylko dla zespołu)</span>
+                                    </label>
+                                </div>
+                                <div class="portal-flash" id="messageFlash"></div>
+                                <button type="submit" class="btn btn--primary">Wyślij wiadomość</button>
+                            </form>
+                        </article>
+                        <article class="portal-card">
+                            <h2 class="portal-card__title">Thread projektu</h2>
+                            <div class="portal-message-list" id="messageList"></div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="portal-tab-panel" data-tab-panel="files">
+                    <article class="portal-card">
+                        <div class="portal-collection__header">
+                            <div>
+                                <h2 class="portal-card__title">File hub</h2>
+                                <p class="portal-helper">Wszystkie materiały, deliverables, dokumenty i wersje plików w jednym miejscu.</p>
+                            </div>
+                        </div>
+                        <div class="portal-files-grid" id="fileHub"></div>
+                    </article>
+                </section>
+
+                <section class="portal-tab-panel" data-tab-panel="invoices">
+                    <div class="portal-split">
+                        <article class="portal-card" data-admin-only hidden>
+                            <h2 class="portal-card__title">Dodaj fakturę</h2>
+                            <form class="portal-form" id="invoiceForm" enctype="multipart/form-data">
+                                <input type="hidden" name="projectId">
+                                <div class="portal-form__row">
+                                    <div class="portal-field">
+                                        <label for="invoiceNumber">Numer faktury</label>
+                                        <input id="invoiceNumber" name="invoiceNumber" type="text" required>
+                                    </div>
+                                    <div class="portal-field">
+                                        <label for="invoiceAmount">Kwota brutto (grosze)</label>
+                                        <input id="invoiceAmount" name="amountCents" type="number" min="0" required>
+                                    </div>
+                                </div>
+                                <div class="portal-form__row">
+                                    <div class="portal-field">
+                                        <label for="invoiceDueAt">Termin płatności</label>
+                                        <input id="invoiceDueAt" name="dueAt" type="date" required>
+                                    </div>
+                                    <div class="portal-field">
+                                        <label for="invoiceStatus">Status</label>
+                                        <select id="invoiceStatus" name="status">
+                                            <option value="ISSUED">Wystawiona</option>
+                                            <option value="PAID">Opłacona</option>
+                                            <option value="OVERDUE">Po terminie</option>
+                                            <option value="DRAFT">Szkic</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="portal-field">
+                                    <label for="invoiceFile">Plik PDF</label>
+                                    <input id="invoiceFile" name="file" type="file" accept="application/pdf" required>
+                                </div>
+                                <div class="portal-flash" id="invoiceFlash"></div>
+                                <button type="submit" class="btn btn--primary">Dodaj fakturę</button>
+                            </form>
+                        </article>
+                        <article class="portal-card">
+                            <h2 class="portal-card__title">Faktury i płatności</h2>
+                            <div class="portal-invoice-list" id="invoiceList"></div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="portal-tab-panel" data-tab-panel="approvals">
+                    <div class="portal-split">
+                        <article class="portal-card" data-admin-only hidden>
+                            <h2 class="portal-card__title">Nowa prośba o akceptację</h2>
+                            <form class="portal-form" id="approvalRequestForm">
+                                <input type="hidden" name="projectId">
+                                <div class="portal-field">
+                                    <label for="approvalTitle">Tytuł</label>
+                                    <input id="approvalTitle" name="title" type="text" required>
+                                </div>
+                                <div class="portal-field">
+                                    <label for="approvalVersion">Wersja</label>
+                                    <input id="approvalVersion" name="versionLabel" type="text" required placeholder="np. Home v3">
+                                </div>
+                                <div class="portal-field">
+                                    <label for="approvalDescription">Opis</label>
+                                    <textarea id="approvalDescription" name="description"></textarea>
+                                </div>
+                                <div class="portal-flash" id="approvalFlash"></div>
+                                <button type="submit" class="btn btn--primary">Wyślij do akceptacji</button>
+                            </form>
+                        </article>
+                        <article class="portal-card">
+                            <h2 class="portal-card__title">Approval log</h2>
+                            <div class="portal-list" id="approvalItems"></div>
+                        </article>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import {
+            apiFetch,
+            bindLogoutButtons,
+            bindSidebarToggle,
+            bindTabs,
+            clearFlash,
+            createListMarkup,
+            escapeHtml,
+            formatCurrency,
+            formatDate,
+            formatShortDate,
+            getProjectIdFromUrl,
+            hydrateUserShell,
+            qsa,
+            renderBadge,
+            requirePortalUser,
+            setFlash,
+            statusLabel
+        } from '/portal/shared.js';
+
+        const projectId = getProjectIdFromUrl();
+        let viewer = null;
+        let workspace = null;
+
+        function splitToArray(value) {
+            return value
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean);
+        }
+
+        function fillBriefForm(brief) {
+            const form = document.getElementById('briefForm');
+            form.projectId.value = projectId;
+            form.companyName.value = brief?.companyName || '';
+            form.targetAudience.value = brief?.targetAudience || '';
+            form.contactName.value = brief?.contactName || '';
+            form.contactEmail.value = brief?.contactEmail || '';
+            form.contactPhone.value = brief?.contactPhone || '';
+            form.businessAddress.value = brief?.businessAddress || '';
+            form.services.value = (brief?.servicesJson || []).join(', ');
+            form.desiredPages.value = (brief?.desiredPagesJson || []).join(', ');
+            form.businessDescription.value = brief?.businessDescription || '';
+            form.colorPreferences.value = brief?.colorPreferences || '';
+            form.inspirations.value = (brief?.inspirationJson || []).join(', ');
+            form.additionalNotes.value = brief?.additionalNotes || '';
+        }
+
+        function renderOverview(project) {
+            document.getElementById('projectTitle').textContent = project.name;
+            document.getElementById('projectSubtitle').textContent = project.description || 'Projekt w toku.';
+
+            document.getElementById('overviewHero').innerHTML = `
+                <span class="portal-card__eyebrow">Project overview</span>
+                <h2 class="portal-card__title">${escapeHtml(project.name)}</h2>
+                <p class="portal-card__subtitle">${escapeHtml(project.description || '')}</p>
+                <div class="portal-inline-meta">
+                    ${renderBadge(statusLabel(project.status), project.status)}
+                    <span>Est. completion: ${formatShortDate(project.estimatedCompletionDate)}</span>
+                    <span>Członkowie: ${project.members.length}</span>
+                </div>
+                <div class="portal-summary-strip">
+                    <div class="portal-summary-tile">
+                        <div class="portal-summary-tile__label">Postęp</div>
+                        <div class="portal-summary-tile__value">${project.progressPercent}%</div>
+                    </div>
+                    <div class="portal-summary-tile">
+                        <div class="portal-summary-tile__label">Aktywny etap</div>
+                        <div class="portal-summary-tile__value">${escapeHtml(project.stages.find((stage) => stage.status === 'ACTIVE')?.name || 'Brak')}</div>
+                    </div>
+                    <div class="portal-summary-tile">
+                        <div class="portal-summary-tile__label">Ostatnia aktywność</div>
+                        <div class="portal-summary-tile__value">${formatShortDate(project.activities[0]?.createdAt || project.updatedAt)}</div>
+                    </div>
+                </div>
+            `;
+
+            fillBriefForm(project.brief);
+
+            document.getElementById('taskChecklist').innerHTML = createListMarkup(
+                project.tasks,
+                (task) => `
+                    <label class="portal-list__item" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                        <span>
+                            <strong>${escapeHtml(task.title)}</strong>
+                            <p class="portal-muted">${escapeHtml(task.description || '')}</p>
+                        </span>
+                        <input type="checkbox" data-task-id="${task.id}" ${task.status === 'COMPLETED' ? 'checked' : ''}>
+                    </label>
+                `,
+                'Brak checklisty.'
+            );
+
+            document.getElementById('milestoneList').innerHTML = createListMarkup(
+                project.milestones,
+                (milestone) => `
+                    <div class="portal-list__item">
+                        <div class="portal-message__header">
+                            <div>
+                                <strong>${escapeHtml(milestone.name)}</strong>
+                                <p class="portal-muted">${escapeHtml(milestone.description || '')}</p>
+                            </div>
+                            ${renderBadge(statusLabel(milestone.status), milestone.status)}
+                        </div>
+                    </div>
+                `,
+                'Brak milestone’ów.'
+            );
+        }
+
+        function renderMaterials(project) {
+            const currentMaterials = project.files.filter((file) => file.folder === 'MATERIALS' || file.folder === 'DELIVERABLES');
+            document.getElementById('materialsList').innerHTML = createListMarkup(
+                currentMaterials,
+                (file) => `
+                    <article class="portal-file">
+                        <div class="portal-file__header">
+                            <div>
+                                <strong>${escapeHtml(file.displayName)}</strong>
+                                <div class="portal-inline-meta">
+                                    ${renderBadge(file.category, 'ACTIVE')}
+                                    <span>Wersja ${file.versionNumber}</span>
+                                    <span>${formatDate(file.createdAt)}</span>
+                                </div>
+                            </div>
+                            <a href="/api/file-download?fileId=${encodeURIComponent(file.id)}" class="btn btn--secondary">Pobierz</a>
+                        </div>
+                        <div class="portal-muted">Uploader: ${escapeHtml(file.uploadedBy.name)}</div>
+                        <div class="portal-file__preview">
+                            ${['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.mimeType) ? `<img class="portal-file__image" src="/api/file-download?fileId=${encodeURIComponent(file.id)}" alt="${escapeHtml(file.displayName)}">` : ''}
+                            ${file.comments.length ? file.comments.map((comment) => `<div class="portal-list__item"><strong>${escapeHtml(comment.author.name)}</strong><p class="portal-muted">${escapeHtml(comment.body)}</p></div>`).join('') : ''}
+                        </div>
+                        <div class="portal-actions-row" style="margin-top: 1rem;">
+                            <button type="button" class="btn btn--ghost" data-replace-file-id="${file.id}" data-version-group="${escapeHtml(file.versionGroup || '')}" data-display-name="${escapeHtml(file.displayName)}" data-category="${file.category}" data-folder="${file.folder}">Zastąp plik</button>
+                        </div>
+                        <form class="portal-form" data-file-comment-form data-file-id="${file.id}" style="margin-top: 1rem;">
+                            <div class="portal-field">
+                                <label for="comment-${file.id}">Dodaj komentarz do pliku</label>
+                                <textarea id="comment-${file.id}" name="comment" placeholder="Np. ta wersja jest finalna do wdrożenia"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn--secondary">Dodaj komentarz</button>
+                        </form>
+                    </article>
+                `,
+                'Brak materiałów.'
+            );
+        }
+
+        function renderTimeline(project) {
+            document.getElementById('stageTimeline').innerHTML = createListMarkup(
+                project.stages,
+                (stage) => `
+                    <article class="portal-timeline__item ${stage.status === 'ACTIVE' ? 'is-active' : ''} ${stage.status === 'COMPLETED' ? 'is-completed' : ''}">
+                        <div class="portal-timeline__dot"></div>
+                        <div>
+                            <div class="portal-message__header">
+                                <div>
+                                    <strong>${escapeHtml(stage.name)}</strong>
+                                    <p class="portal-muted">${escapeHtml(stage.description || '')}</p>
+                                </div>
+                                ${renderBadge(statusLabel(stage.status), stage.status)}
+                            </div>
+                            <div class="portal-inline-meta">
+                                <span>Planned: ${formatShortDate(stage.plannedDate)}</span>
+                                <span>Completed: ${formatShortDate(stage.completedDate)}</span>
+                            </div>
+                            ${viewer.role !== 'CLIENT' ? `
+                                <div class="portal-actions-row" style="margin-top: 1rem;">
+                                    <button class="btn btn--ghost" data-stage-id="${stage.id}" data-stage-status="ACTIVE">Aktywny</button>
+                                    <button class="btn btn--ghost" data-stage-id="${stage.id}" data-stage-status="COMPLETED">Ukończony</button>
+                                    <button class="btn btn--ghost" data-stage-id="${stage.id}" data-stage-status="BLOCKED">Blocked</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </article>
+                `,
+                'Brak etapów.'
+            );
+        }
+
+        function renderFeedback(project) {
+            document.getElementById('feedbackList').innerHTML = createListMarkup(
+                project.feedbackItems,
+                (item) => `
+                    <article class="portal-feedback">
+                        <div class="portal-feedback__header">
+                            <div>
+                                <strong>${escapeHtml(item.title)}</strong>
+                                <div class="portal-inline-meta">
+                                    ${renderBadge(statusLabel(item.status), item.status)}
+                                    <span>${escapeHtml(item.deliverableLabel || 'Bez przypisanego deliverable')}</span>
+                                </div>
+                            </div>
+                            <span class="portal-muted">${formatDate(item.createdAt)}</span>
+                        </div>
+                        <div class="portal-feedback__body">${escapeHtml(item.body)}</div>
+                        <div class="portal-inline-meta" style="margin-top: 1rem;">
+                            <span>Autor: ${escapeHtml(item.createdBy.name)}</span>
+                            ${item.resolvedBy ? `<span>Resolved by: ${escapeHtml(item.resolvedBy.name)}</span>` : ''}
+                        </div>
+                        ${viewer.role !== 'CLIENT' ? `
+                            <div class="portal-actions-row" style="margin-top: 1rem;">
+                                <button class="btn btn--ghost" data-feedback-id="${item.id}" data-feedback-status="IN_PROGRESS">W trakcie</button>
+                                <button class="btn btn--ghost" data-feedback-id="${item.id}" data-feedback-status="RESOLVED">Resolved</button>
+                            </div>
+                        ` : ''}
+                    </article>
+                `,
+                'Brak feedbacku.'
+            );
+        }
+
+        function renderMessages(project) {
+            const messages = project.threads.flatMap((thread) => thread.messages);
+            document.getElementById('messageList').innerHTML = createListMarkup(
+                messages,
+                (message) => `
+                    <article class="portal-message ${message.isInternal ? 'is-internal' : ''}">
+                        <div class="portal-message__header">
+                            <div>
+                                <strong>${escapeHtml(message.author.name)}</strong>
+                                <div class="portal-inline-meta">
+                                    ${renderBadge(message.author.role === 'CLIENT' ? 'Klient' : 'Zespół', message.author.role === 'CLIENT' ? 'ACTIVE' : 'PENDING')}
+                                    ${message.isInternal ? renderBadge('Notatka wewnętrzna', 'BLOCKED') : ''}
+                                </div>
+                            </div>
+                            <span class="portal-muted">${formatDate(message.createdAt)}</span>
+                        </div>
+                        <div class="portal-message__body">${escapeHtml(message.body)}</div>
+                    </article>
+                `,
+                'Brak wiadomości.'
+            );
+        }
+
+        function renderFileHub(project) {
+            const grouped = project.files.reduce((acc, file) => {
+                if (!acc[file.folder]) acc[file.folder] = [];
+                acc[file.folder].push(file);
+                return acc;
+            }, {});
+
+            document.getElementById('fileHub').innerHTML = Object.entries(grouped).map(([folder, files]) => `
+                <section class="portal-card">
+                    <h3 class="portal-card__title">${escapeHtml(folder.replaceAll('_', ' '))}</h3>
+                    <div class="portal-file-list">
+                        ${files.map((file) => `
+                            <article class="portal-file">
+                                <div class="portal-file__header">
+                                    <div>
+                                        <strong>${escapeHtml(file.displayName)}</strong>
+                                        <div class="portal-inline-meta">
+                                            ${renderBadge(file.category, 'ACTIVE')}
+                                            <span>v${file.versionNumber}</span>
+                                        </div>
+                                    </div>
+                                    <a href="/api/file-download?fileId=${encodeURIComponent(file.id)}" class="btn btn--ghost">Pobierz</a>
+                                </div>
+                                <div class="portal-muted">${escapeHtml(file.mimeType)} · ${Math.round(file.sizeBytes / 1024)} KB</div>
+                            </article>
+                        `).join('')}
+                    </div>
+                </section>
+            `).join('') || '<p class="portal-empty">Brak plików w hubie.</p>';
+        }
+
+        function renderInvoices(project) {
+            document.getElementById('invoiceList').innerHTML = createListMarkup(
+                project.invoices,
+                (invoice) => `
+                    <article class="portal-invoice">
+                        <div class="portal-invoice__header">
+                            <div>
+                                <strong>${escapeHtml(invoice.invoiceNumber)}</strong>
+                                <div class="portal-inline-meta">
+                                    ${renderBadge(statusLabel(invoice.status), invoice.status)}
+                                    <span>Due: ${formatShortDate(invoice.dueAt)}</span>
+                                </div>
+                            </div>
+                            <div class="portal-kpi__value">${formatCurrency(invoice.amountCents, invoice.currency)}</div>
+                        </div>
+                        <div class="portal-actions-row">
+                            ${invoice.pdfFileId ? `<a href="/api/file-download?fileId=${encodeURIComponent(invoice.pdfFileId)}" class="btn btn--secondary">Pobierz PDF</a>` : ''}
+                            ${viewer.role !== 'CLIENT' ? `
+                                <button class="btn btn--ghost" data-invoice-id="${invoice.id}" data-invoice-status="PAID">Oznacz jako opłaconą</button>
+                                <button class="btn btn--ghost" data-invoice-id="${invoice.id}" data-invoice-status="OVERDUE">Oznacz jako po terminie</button>
+                            ` : ''}
+                        </div>
+                    </article>
+                `,
+                'Brak faktur w projekcie.'
+            );
+        }
+
+        function renderApprovals(project) {
+            document.getElementById('approvalItems').innerHTML = createListMarkup(
+                project.approvals,
+                (approval) => `
+                    <article class="portal-list__item">
+                        <div class="portal-message__header">
+                            <div>
+                                <strong>${escapeHtml(approval.title)}</strong>
+                                <div class="portal-inline-meta">
+                                    ${renderBadge(statusLabel(approval.status), approval.status)}
+                                    <span>Version: ${escapeHtml(approval.versionLabel)}</span>
+                                </div>
+                            </div>
+                            <span class="portal-muted">${formatDate(approval.requestedAt)}</span>
+                        </div>
+                        <p class="portal-muted">${escapeHtml(approval.description || '')}</p>
+                        ${approval.responseNote ? `<p style="margin-top: 1rem;">${escapeHtml(approval.responseNote)}</p>` : ''}
+                        ${viewer.role === 'CLIENT' && approval.status === 'PENDING' ? `
+                            <div class="portal-actions-row" style="margin-top: 1rem;">
+                                <button class="btn btn--primary" data-approval-id="${approval.id}" data-approval-status="APPROVED">Akceptuję</button>
+                                <button class="btn btn--secondary" data-approval-id="${approval.id}" data-approval-status="REJECTED">Odrzucam</button>
+                            </div>
+                        ` : ''}
+                    </article>
+                `,
+                'Brak próśb o akceptację.'
+            );
+        }
+
+        function bindTaskToggles() {
+            qsa('[data-task-id]').forEach((checkbox) => {
+                checkbox.addEventListener('change', async () => {
+                    await apiFetch('/api/project-tasks', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            projectId,
+                            taskId: checkbox.dataset.taskId,
+                            status: checkbox.checked ? 'COMPLETED' : 'PENDING'
+                        })
+                    });
+                    await loadWorkspace();
+                });
+            });
+        }
+
+        function bindStageActions() {
+            qsa('[data-stage-id]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    await apiFetch('/api/project-stages', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            projectId,
+                            stageId: button.dataset.stageId,
+                            status: button.dataset.stageStatus,
+                            progressPercent: button.dataset.stageStatus === 'COMPLETED' ? Math.min(100, workspace.project.progressPercent + 10) : workspace.project.progressPercent
+                        })
+                    });
+                    await loadWorkspace();
+                });
+            });
+        }
+
+        function bindFeedbackActions() {
+            qsa('[data-feedback-id]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    await apiFetch('/api/project-feedback', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'update-status',
+                            projectId,
+                            feedbackId: button.dataset.feedbackId,
+                            status: button.dataset.feedbackStatus,
+                            resolutionNote: button.dataset.feedbackStatus === 'RESOLVED' ? 'Zamknięte w portalu.' : 'W trakcie realizacji.'
+                        })
+                    });
+                    await loadWorkspace();
+                });
+            });
+        }
+
+        function bindInvoiceActions() {
+            qsa('[data-invoice-id]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    await apiFetch('/api/project-invoices', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            projectId,
+                            invoiceId: button.dataset.invoiceId,
+                            status: button.dataset.invoiceStatus
+                        })
+                    });
+                    await loadWorkspace();
+                });
+            });
+        }
+
+        function bindApprovalActions() {
+            qsa('[data-approval-id]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const responseNote = window.prompt(
+                        button.dataset.approvalStatus === 'APPROVED'
+                            ? 'Dodaj krótką notatkę do akceptacji.'
+                            : 'Dodaj powód odrzucenia.'
+                    );
+
+                    if (!responseNote) return;
+
+                    await apiFetch('/api/project-approvals', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'respond',
+                            projectId,
+                            approvalId: button.dataset.approvalId,
+                            status: button.dataset.approvalStatus,
+                            responseNote
+                        })
+                    });
+                    await loadWorkspace();
+                });
+            });
+        }
+
+        function bindMaterialActions() {
+            qsa('[data-replace-file-id]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const form = document.getElementById('fileUploadForm');
+                    form.replacedFileId.value = button.dataset.replaceFileId;
+                    form.versionGroup.value = button.dataset.versionGroup;
+                    form.displayName.value = button.dataset.displayName;
+                    form.category.value = button.dataset.category;
+                    form.folder.value = button.dataset.folder;
+                    document.getElementById('replaceHelper').textContent = `Tryb zamiany aktywny dla: ${button.dataset.displayName}`;
+                    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+
+            qsa('[data-file-comment-form]').forEach((form) => {
+                form.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const textarea = form.querySelector('textarea[name="comment"]');
+                    const comment = textarea.value.trim();
+                    if (!comment) return;
+
+                    await apiFetch('/api/project-files', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            projectId,
+                            fileId: form.dataset.fileId,
+                            comment
+                        })
+                    });
+
+                    textarea.value = '';
+                    await loadWorkspace();
+                });
+            });
+        }
+
+        async function loadWorkspace() {
+            viewer = await requirePortalUser();
+            if (!viewer) return;
+            if (!projectId) {
+                window.location.href = '/portal/';
+                return;
+            }
+
+            hydrateUserShell(viewer);
+            bindSidebarToggle();
+            bindLogoutButtons();
+            bindTabs();
+
+            workspace = await apiFetch(`/api/project-workspace?projectId=${encodeURIComponent(projectId)}`, {
+                method: 'GET'
+            });
+
+            const project = workspace.project;
+            qsa('input[name="projectId"]').forEach((input) => {
+                input.value = project.id;
+            });
+
+            renderOverview(project);
+            renderMaterials(project);
+            renderTimeline(project);
+            renderFeedback(project);
+            renderMessages(project);
+            renderFileHub(project);
+            renderInvoices(project);
+            renderApprovals(project);
+
+            bindTaskToggles();
+            bindStageActions();
+            bindFeedbackActions();
+            bindInvoiceActions();
+            bindApprovalActions();
+            bindMaterialActions();
+        }
+
+        document.getElementById('briefForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const flash = document.getElementById('briefFlash');
+            clearFlash(flash);
+            const form = event.currentTarget;
+
+            try {
+                await apiFetch('/api/project-brief', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        projectId,
+                        companyName: form.companyName.value.trim(),
+                        businessDescription: form.businessDescription.value.trim(),
+                        targetAudience: form.targetAudience.value.trim(),
+                        services: splitToArray(form.services.value),
+                        desiredPages: splitToArray(form.desiredPages.value),
+                        colorPreferences: form.colorPreferences.value.trim(),
+                        inspirations: splitToArray(form.inspirations.value),
+                        contactName: form.contactName.value.trim(),
+                        contactEmail: form.contactEmail.value.trim(),
+                        contactPhone: form.contactPhone.value.trim(),
+                        businessAddress: form.businessAddress.value.trim(),
+                        additionalNotes: form.additionalNotes.value.trim()
+                    })
+                });
+                setFlash(flash, 'Brief zapisany.', 'success');
+                await loadWorkspace();
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+
+        document.getElementById('feedbackForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const flash = document.getElementById('feedbackFlash');
+            clearFlash(flash);
+            const form = event.currentTarget;
+
+            try {
+                await apiFetch('/api/project-feedback', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'create',
+                        projectId,
+                        title: form.title.value.trim(),
+                        body: form.body.value.trim(),
+                        deliverableLabel: form.deliverableLabel.value.trim()
+                    })
+                });
+                form.reset();
+                setFlash(flash, 'Feedback dodany.', 'success');
+                await loadWorkspace();
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+
+        document.getElementById('messageForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const flash = document.getElementById('messageFlash');
+            clearFlash(flash);
+            const form = event.currentTarget;
+
+            try {
+                await apiFetch('/api/project-messages', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        projectId,
+                        body: form.body.value.trim(),
+                        isInternal: Boolean(form.isInternal?.checked)
+                    })
+                });
+                form.reset();
+                setFlash(flash, 'Wiadomość wysłana.', 'success');
+                await loadWorkspace();
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+
+        document.getElementById('approvalRequestForm')?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const flash = document.getElementById('approvalFlash');
+            clearFlash(flash);
+            const form = event.currentTarget;
+
+            try {
+                await apiFetch('/api/project-approvals', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'request',
+                        projectId,
+                        title: form.title.value.trim(),
+                        versionLabel: form.versionLabel.value.trim(),
+                        description: form.description.value.trim()
+                    })
+                });
+                form.reset();
+                setFlash(flash, 'Prośba o akceptację została wysłana.', 'success');
+                await loadWorkspace();
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+
+        document.getElementById('fileUploadForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const flash = document.getElementById('uploadFlash');
+            clearFlash(flash);
+            const form = event.currentTarget;
+
+            const formData = new FormData(form);
+            formData.set('projectId', projectId);
+
+            try {
+                await apiFetch('/api/project-files', {
+                    method: 'POST',
+                    body: formData
+                });
+                form.reset();
+                form.versionGroup.value = '';
+                form.replacedFileId.value = '';
+                document.getElementById('replaceHelper').textContent = '';
+                setFlash(flash, 'Plik został dodany.', 'success');
+                await loadWorkspace();
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+
+        document.getElementById('invoiceForm')?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const flash = document.getElementById('invoiceFlash');
+            clearFlash(flash);
+            const form = event.currentTarget;
+            const formData = new FormData(form);
+            formData.set('projectId', projectId);
+
+            try {
+                await apiFetch('/api/project-invoices', {
+                    method: 'POST',
+                    body: formData
+                });
+                form.reset();
+                setFlash(flash, 'Faktura została dodana.', 'success');
+                await loadWorkspace();
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+
+        const dropzone = document.getElementById('uploadDropzone');
+        const fileInput = document.getElementById('materialFile');
+
+        ['dragenter', 'dragover'].forEach((eventName) => {
+            dropzone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                dropzone.classList.add('is-dragging');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach((eventName) => {
+            dropzone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                dropzone.classList.remove('is-dragging');
+            });
+        });
+
+        dropzone.addEventListener('drop', (event) => {
+            if (event.dataTransfer?.files?.length) {
+                fileInput.files = event.dataTransfer.files;
+            }
+        });
+
+        dropzone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        loadWorkspace().catch((error) => {
+            console.error(error);
+        });
+    </script>
+</body>
+</html>

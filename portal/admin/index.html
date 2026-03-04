@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal klienta | Panel admina</title>
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=16">
+    <link rel="stylesheet" href="/portal/portal.css?v=1">
+</head>
+<body class="portal-page">
+    <div class="portal-shell">
+        <aside class="portal-sidebar">
+            <div class="portal-sidebar__brand">
+                <a href="/portal/">
+                    <span class="nav__logo-text">koncept</span>
+                    <span class="nav__logo-dot"></span>
+                </a>
+            </div>
+            <nav class="portal-nav">
+                <a class="portal-nav__link" href="/portal/"><span>Dashboard</span></a>
+                <a class="portal-nav__link is-active" href="/portal/admin/"><span>Panel admina</span></a>
+            </nav>
+            <div class="portal-sidebar__footer">
+                <div class="portal-sidebar__user">
+                    <div class="portal-sidebar__user-name" data-user-name>Admin</div>
+                    <div class="portal-sidebar__user-role" data-user-role>Admin</div>
+                </div>
+                <button type="button" class="btn btn--primary btn--full" data-logout>Wyloguj</button>
+            </div>
+        </aside>
+
+        <main class="portal-main">
+            <div class="portal-topbar">
+                <div class="portal-topbar__content">
+                    <button type="button" class="btn btn--secondary portal-mobile-toggle" data-portal-menu-toggle aria-expanded="false">Menu</button>
+                    <span class="portal-card__eyebrow">Panel admina</span>
+                    <h1>Tworzenie projektów, zaproszenia i kontrola całego portalu.</h1>
+                    <p>To jest operacyjny panel dla agency ownera i zespołu. Pozwala tworzyć projekty, przypisywać klientów i śledzić aktywne zaproszenia.</p>
+                </div>
+            </div>
+
+            <section class="portal-split">
+                <article class="portal-card">
+                    <h2 class="portal-card__title">Nowy projekt</h2>
+                    <form class="portal-form" id="projectForm">
+                        <div class="portal-field">
+                            <label for="projectName">Nazwa projektu</label>
+                            <input id="projectName" name="name" type="text" required>
+                        </div>
+                        <div class="portal-field">
+                            <label for="projectDescription">Opis</label>
+                            <textarea id="projectDescription" name="description" required></textarea>
+                        </div>
+                        <div class="portal-form__row">
+                            <div class="portal-field">
+                                <label for="projectDeadline">Planowana data zakończenia</label>
+                                <input id="projectDeadline" name="estimatedCompletionDate" type="datetime-local">
+                            </div>
+                            <div class="portal-field">
+                                <label for="projectClientEmail">E-mail klienta</label>
+                                <input id="projectClientEmail" name="clientEmail" type="email">
+                            </div>
+                        </div>
+                        <div class="portal-flash" id="projectFlash"></div>
+                        <button type="submit" class="btn btn--primary">Utwórz projekt</button>
+                    </form>
+                </article>
+
+                <article class="portal-card">
+                    <h2 class="portal-card__title">Nowe zaproszenie</h2>
+                    <form class="portal-form" id="inviteForm">
+                        <div class="portal-form__row">
+                            <div class="portal-field">
+                                <label for="inviteEmail">E-mail</label>
+                                <input id="inviteEmail" name="email" type="email" required>
+                            </div>
+                            <div class="portal-field">
+                                <label for="inviteRole">Rola</label>
+                                <select id="inviteRole" name="role">
+                                    <option value="CLIENT">CLIENT</option>
+                                    <option value="TEAM_MEMBER">TEAM_MEMBER</option>
+                                    <option value="ADMIN">ADMIN</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="portal-form__row">
+                            <div class="portal-field">
+                                <label for="inviteProject">Projekt</label>
+                                <select id="inviteProject" name="projectId">
+                                    <option value="">Bez projektu</option>
+                                </select>
+                            </div>
+                            <div class="portal-field">
+                                <label for="inviteMembershipRole">Rola projektowa</label>
+                                <select id="inviteMembershipRole" name="membershipRole">
+                                    <option value="CLIENT_CONTACT">CLIENT_CONTACT</option>
+                                    <option value="COLLABORATOR">COLLABORATOR</option>
+                                    <option value="OWNER">OWNER</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="portal-flash" id="inviteFlash"></div>
+                        <button type="submit" class="btn btn--primary">Wyślij zaproszenie</button>
+                    </form>
+                </article>
+            </section>
+
+            <section class="portal-grid" style="margin-top: 1.5rem;">
+                <article class="portal-card">
+                    <h2 class="portal-card__title">Projekty</h2>
+                    <div class="portal-project-list" id="adminProjects"></div>
+                </article>
+                <article class="portal-card">
+                    <h2 class="portal-card__title">Użytkownicy i zaproszenia</h2>
+                    <div class="portal-split">
+                        <div>
+                            <h3 class="portal-card__title" style="font-size: 1.1rem;">Użytkownicy</h3>
+                            <div class="portal-list" id="adminUsers"></div>
+                        </div>
+                        <div>
+                            <h3 class="portal-card__title" style="font-size: 1.1rem;">Aktywne zaproszenia</h3>
+                            <div class="portal-list" id="adminInvites"></div>
+                        </div>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import {
+            apiFetch,
+            bindLogoutButtons,
+            bindSidebarToggle,
+            clearFlash,
+            createListMarkup,
+            escapeHtml,
+            formatDate,
+            hydrateUserShell,
+            renderBadge,
+            requirePortalUser,
+            setFlash,
+            statusLabel
+        } from '/portal/shared.js';
+
+        const projectForm = document.getElementById('projectForm');
+        const inviteForm = document.getElementById('inviteForm');
+        const projectSelect = document.getElementById('inviteProject');
+
+        async function loadAdmin() {
+            const user = await requirePortalUser();
+            if (!user) return;
+            if (user.role === 'CLIENT') {
+                window.location.href = '/portal/';
+                return;
+            }
+
+            hydrateUserShell(user);
+            bindSidebarToggle();
+            bindLogoutButtons();
+
+            const data = await apiFetch('/api/admin-overview', { method: 'GET' });
+
+            document.getElementById('adminProjects').innerHTML = createListMarkup(
+                data.projects,
+                (project) => `
+                    <article class="portal-project">
+                        <div class="portal-project__header">
+                            <div>
+                                <div class="portal-project__title">${escapeHtml(project.name)}</div>
+                                <div class="portal-inline-meta">
+                                    ${renderBadge(statusLabel(project.status), project.status)}
+                                    <span>Członkowie: ${project.members.length}</span>
+                                </div>
+                            </div>
+                            <a href="/portal/project/?id=${encodeURIComponent(project.id)}" class="btn btn--secondary">Otwórz</a>
+                        </div>
+                    </article>
+                `,
+                'Brak projektów.'
+            );
+
+            document.getElementById('adminUsers').innerHTML = createListMarkup(
+                data.users,
+                (item) => `
+                    <div class="portal-list__item">
+                        <strong>${escapeHtml(item.name)}</strong>
+                        <p class="portal-muted">${escapeHtml(item.email)}</p>
+                        <div class="portal-inline-meta">
+                            ${renderBadge(item.role, item.role === 'CLIENT' ? 'ACTIVE' : 'PENDING')}
+                            ${renderBadge(item.status, item.status === 'ACTIVE' ? 'COMPLETED' : 'PENDING')}
+                        </div>
+                    </div>
+                `,
+                'Brak użytkowników.'
+            );
+
+            document.getElementById('adminInvites').innerHTML = createListMarkup(
+                data.invites,
+                (invite) => `
+                    <div class="portal-list__item">
+                        <strong>${escapeHtml(invite.email)}</strong>
+                        <p class="portal-muted">${invite.project ? escapeHtml(invite.project.name) : 'Bez przypisanego projektu'}</p>
+                        <div class="portal-inline-meta">
+                            ${renderBadge(invite.role, invite.role === 'CLIENT' ? 'ACTIVE' : 'PENDING')}
+                            <span>Expires: ${formatDate(invite.expiresAt)}</span>
+                        </div>
+                    </div>
+                `,
+                'Brak aktywnych zaproszeń.'
+            );
+
+            projectSelect.innerHTML = `<option value="">Bez projektu</option>${data.projects.map((project) => `<option value="${project.id}">${escapeHtml(project.name)}</option>`).join('')}`;
+        }
+
+        projectForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const flash = document.getElementById('projectFlash');
+            clearFlash(flash);
+            const payload = {
+                name: projectForm.name.value.trim(),
+                description: projectForm.description.value.trim(),
+                estimatedCompletionDate: projectForm.estimatedCompletionDate.value ? new Date(projectForm.estimatedCompletionDate.value).toISOString() : undefined,
+                clientEmail: projectForm.clientEmail.value.trim() || undefined
+            };
+
+            try {
+                const result = await apiFetch('/api/admin-projects', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                projectForm.reset();
+                setFlash(flash, `Projekt "${result.project.name}" został utworzony.`, 'success');
+                await loadAdmin();
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+
+        inviteForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const flash = document.getElementById('inviteFlash');
+            clearFlash(flash);
+            const payload = {
+                email: inviteForm.email.value.trim(),
+                role: inviteForm.role.value,
+                projectId: inviteForm.projectId.value || undefined,
+                membershipRole: inviteForm.membershipRole.value
+            };
+
+            try {
+                const result = await apiFetch('/api/auth-invite', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                setFlash(flash, `Zaproszenie zostało wysłane. Link roboczy: ${result.inviteUrl}`, 'success');
+                inviteForm.reset();
+                await loadAdmin();
+            } catch (error) {
+                setFlash(flash, error.message, 'error');
+            }
+        });
+
+        loadAdmin().catch((error) => {
+            console.error(error);
+        });
+    </script>
+</body>
+</html>

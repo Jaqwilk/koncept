@@ -1,0 +1,422 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  TEAM_MEMBER
+  CLIENT
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+enum ProjectStatus {
+  WAITING_FOR_MATERIALS
+  DESIGN_PHASE
+  DEVELOPMENT_PHASE
+  REVIEW_PHASE
+  COMPLETED
+}
+
+enum WorkflowStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  BLOCKED
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+enum FeedbackStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum NotificationType {
+  FILE_UPLOADED
+  MESSAGE_RECEIVED
+  PROJECT_UPDATED
+  FEEDBACK_REQUESTED
+  APPROVAL_REQUIRED
+  INVOICE_AVAILABLE
+  TASK_COMPLETED
+  INVITE_SENT
+}
+
+enum FileCategory {
+  LOGO
+  IMAGES
+  BRAND_ASSETS
+  TEXT_CONTENT
+  COMPANY_INFORMATION
+  OTHER
+  DELIVERABLE
+  DOCUMENT
+  INVOICE
+  CONTRACT
+}
+
+enum FileFolder {
+  MATERIALS
+  DESIGN_FILES
+  WEBSITE_ASSETS
+  DOCUMENTS
+  CONTRACTS
+  DELIVERABLES
+  INVOICES
+}
+
+enum ProjectMembershipRole {
+  OWNER
+  COLLABORATOR
+  CLIENT_CONTACT
+}
+
+model User {
+  id                String             @id @default(cuid())
+  name              String
+  email             String             @unique
+  passwordHash      String?
+  role              Role
+  status            UserStatus         @default(INVITED)
+  avatarUrl         String?
+  lastLoginAt       DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  createdInvites    Invite[]           @relation("InviteCreator")
+  memberships       ProjectMember[]
+  updatedBriefs     ProjectBrief[]
+  completedTasks    Task[]             @relation("TaskCompletedBy")
+  uploadedFiles     FileAsset[]
+  fileComments      FileComment[]
+  messageThreads    MessageThread[]    @relation("ThreadCreatedBy")
+  messages          Message[]
+  feedbackCreated   FeedbackItem[]     @relation("FeedbackCreatedBy")
+  feedbackResolved  FeedbackItem[]     @relation("FeedbackResolvedBy")
+  approvalsAsked    ApprovalRequest[]  @relation("ApprovalRequestedBy")
+  approvalsHandled  ApprovalRequest[]  @relation("ApprovalRespondedBy")
+  invoicesCreated   Invoice[]
+  notifications     Notification[]
+  activities        ActivityLog[]
+}
+
+model Invite {
+  id             String   @id @default(cuid())
+  email          String
+  role           Role
+  membershipRole ProjectMembershipRole?
+  tokenHash      String   @unique
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  projectId      String?
+  project        Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdById    String
+  createdBy      User     @relation("InviteCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt      DateTime @default(now())
+
+  @@index([email])
+  @@index([projectId])
+}
+
+model Project {
+  id                      String            @id @default(cuid())
+  name                    String
+  slug                    String            @unique
+  description             String?
+  status                  ProjectStatus     @default(WAITING_FOR_MATERIALS)
+  progressPercent         Int               @default(0)
+  estimatedCompletionDate DateTime?
+  startedAt               DateTime          @default(now())
+  completedAt             DateTime?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  members                 ProjectMember[]
+  brief                   ProjectBrief?
+  tasks                   Task[]
+  milestones              Milestone[]
+  stages                  ProjectStage[]
+  files                   FileAsset[]
+  threads                 MessageThread[]
+  feedbackItems           FeedbackItem[]
+  approvals               ApprovalRequest[]
+  invoices                Invoice[]
+  notifications           Notification[]
+  activities              ActivityLog[]
+  invites                 Invite[]
+}
+
+model ProjectMember {
+  id             String                @id @default(cuid())
+  projectId      String
+  userId         String
+  membershipRole ProjectMembershipRole @default(COLLABORATOR)
+  joinedAt       DateTime              @default(now())
+  project        Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model ProjectBrief {
+  id                  String   @id @default(cuid())
+  projectId           String   @unique
+  companyName         String?
+  businessDescription String?
+  targetAudience      String?
+  servicesJson        Json?
+  desiredPagesJson    Json?
+  colorPreferences    String?
+  inspirationJson     Json?
+  contactName         String?
+  contactEmail        String?
+  contactPhone        String?
+  businessAddress     String?
+  additionalNotes     String?
+  version             Int      @default(1)
+  updatedById         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  updatedBy           User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+model Task {
+  id            String      @id @default(cuid())
+  projectId     String
+  taskKey       String?
+  title         String
+  description   String?
+  status        TaskStatus  @default(PENDING)
+  autoCompletable Boolean   @default(true)
+  completedAt   DateTime?
+  completedById String?
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  completedBy   User?       @relation("TaskCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+
+  @@index([projectId, sortOrder])
+}
+
+model Milestone {
+  id            String         @id @default(cuid())
+  projectId     String
+  name          String
+  description   String?
+  status        WorkflowStatus @default(PENDING)
+  plannedDate   DateTime?
+  completedDate DateTime?
+  sortOrder     Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, sortOrder])
+}
+
+model ProjectStage {
+  id            String         @id @default(cuid())
+  projectId     String
+  name          String
+  description   String?
+  status        WorkflowStatus @default(PENDING)
+  plannedDate   DateTime?
+  completedDate DateTime?
+  sortOrder     Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, sortOrder])
+}
+
+model FileAsset {
+  id              String       @id @default(cuid())
+  projectId       String
+  category        FileCategory
+  folder          FileFolder
+  displayName     String
+  blobUrl         String?
+  blobDownloadUrl String?
+  blobPath        String?
+  mimeType        String
+  sizeBytes       Int
+  versionGroup    String?
+  versionNumber   Int          @default(1)
+  isCurrentVersion Boolean     @default(true)
+  uploadedById    String
+  replacedFileId  String?
+  createdAt       DateTime     @default(now())
+  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy      User         @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  replacedFile    FileAsset?   @relation("FileReplacement", fields: [replacedFileId], references: [id], onDelete: SetNull)
+  newerVersions   FileAsset[]  @relation("FileReplacement")
+  comments        FileComment[]
+  messageLinks    MessageAttachment[]
+  feedbackItems   FeedbackItem[]
+  invoices        Invoice[]
+
+  @@index([projectId, folder])
+  @@index([projectId, category])
+}
+
+model FileComment {
+  id         String    @id @default(cuid())
+  fileId      String
+  authorId    String
+  body        String
+  createdAt   DateTime  @default(now())
+  file        FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+}
+
+model MessageThread {
+  id           String    @id @default(cuid())
+  projectId     String
+  title         String
+  createdById   String?
+  createdAt     DateTime  @default(now())
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy     User?     @relation("ThreadCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  messages      Message[]
+}
+
+model Message {
+  id          String             @id @default(cuid())
+  threadId     String
+  authorId     String
+  body         String
+  isInternal   Boolean            @default(false)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  thread       MessageThread      @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author       User               @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  attachments  MessageAttachment[]
+}
+
+model MessageAttachment {
+  id       String    @id @default(cuid())
+  messageId String
+  fileId    String
+  message   Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  file      FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, fileId])
+}
+
+model FeedbackItem {
+  id               String         @id @default(cuid())
+  projectId        String
+  title            String
+  body             String
+  status           FeedbackStatus @default(OPEN)
+  deliverableLabel String?
+  attachmentFileId String?
+  createdById      String
+  resolvedById     String?
+  resolvedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  project          Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  attachmentFile   FileAsset?     @relation(fields: [attachmentFileId], references: [id], onDelete: SetNull)
+  createdBy        User           @relation("FeedbackCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  resolvedBy       User?          @relation("FeedbackResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+}
+
+model ApprovalRequest {
+  id            String         @id @default(cuid())
+  projectId      String
+  title          String
+  description    String?
+  versionLabel   String
+  status         ApprovalStatus @default(PENDING)
+  requestedById  String
+  respondedById  String?
+  requestedAt    DateTime      @default(now())
+  respondedAt    DateTime?
+  responseNote   String?
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requestedBy    User          @relation("ApprovalRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  respondedBy    User?         @relation("ApprovalRespondedBy", fields: [respondedById], references: [id], onDelete: SetNull)
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  projectId      String
+  invoiceNumber  String
+  amountCents    Int
+  currency       String        @default("PLN")
+  status         InvoiceStatus @default(DRAFT)
+  issuedAt       DateTime      @default(now())
+  dueAt          DateTime
+  paidAt         DateTime?
+  pdfFileId      String?
+  createdById    String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  pdfFile        FileAsset?    @relation(fields: [pdfFileId], references: [id], onDelete: SetNull)
+  createdBy      User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([projectId])
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId      String
+  projectId   String?
+  type        NotificationType
+  title       String
+  body        String
+  link        String?
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  projectId   String
+  actorId     String?
+  eventType   String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+}

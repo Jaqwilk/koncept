@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal klienta | Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=16">
+    <link rel="stylesheet" href="/portal/portal.css?v=1">
+</head>
+<body class="portal-page">
+    <div class="portal-shell">
+        <aside class="portal-sidebar">
+            <div class="portal-sidebar__brand">
+                <a href="/portal/">
+                    <span class="nav__logo-text">koncept</span>
+                    <span class="nav__logo-dot"></span>
+                </a>
+                <button type="button" class="btn btn--ghost portal-mobile-only" data-logout>Wyloguj</button>
+            </div>
+            <nav class="portal-nav" aria-label="Nawigacja portalu">
+                <a class="portal-nav__link is-active" href="/portal/">
+                    <span>Dashboard</span>
+                </a>
+                <a class="portal-nav__link" href="/portal/#notifications">
+                    <span>Powiadomienia</span>
+                </a>
+                <a class="portal-nav__link" href="/portal/admin/" data-admin-only hidden>
+                    <span>Panel admina</span>
+                </a>
+                <a class="portal-nav__link" href="/index.html">
+                    <span>Wróć na stronę</span>
+                </a>
+            </nav>
+            <div class="portal-sidebar__footer">
+                <div class="portal-sidebar__user">
+                    <div class="portal-sidebar__user-name" data-user-name>Użytkownik</div>
+                    <div class="portal-sidebar__user-role" data-user-role>Klient</div>
+                </div>
+                <button type="button" class="btn btn--primary btn--full" data-logout>Wyloguj</button>
+            </div>
+        </aside>
+
+        <main class="portal-main">
+            <div class="portal-topbar">
+                <div class="portal-topbar__content">
+                    <button type="button" class="btn btn--secondary portal-mobile-toggle" data-portal-menu-toggle aria-expanded="false">Menu</button>
+                    <span class="portal-card__eyebrow">Dashboard</span>
+                    <h1>Twoje projekty i to, co dzieje się teraz.</h1>
+                    <p>Portal klienta porządkuje postęp projektu, pliki, checklistę, wiadomości i akceptacje w jednym miejscu.</p>
+                </div>
+                <div class="portal-topbar__actions">
+                    <a href="/portal/admin/" class="btn btn--secondary" data-admin-only hidden>Panel admina</a>
+                    <a href="/portal/project/" class="btn btn--primary" id="primaryProjectLink">Otwórz workspace</a>
+                </div>
+            </div>
+
+            <section class="portal-grid portal-grid--cards" id="summaryCards"></section>
+
+            <section class="portal-grid portal-grid--dashboard" style="margin-top: 1.5rem;">
+                <div class="portal-grid">
+                    <article class="portal-card portal-card--hero">
+                        <span class="portal-card__eyebrow">Aktywne projekty</span>
+                        <h2 class="portal-card__title">Zobacz status, kolejny milestone i ostatnią aktywność.</h2>
+                        <p class="portal-card__subtitle">Każda karta pokazuje to, co najważniejsze z perspektywy klienta lub zespołu.</p>
+                        <div class="portal-project-list" id="projectList"></div>
+                    </article>
+
+                    <div class="portal-split">
+                        <article class="portal-card">
+                            <div class="portal-collection__header">
+                                <div>
+                                    <h2 class="portal-card__title">Pending tasks</h2>
+                                    <p class="portal-helper">To rzeczy, których portal nadal od Ciebie oczekuje.</p>
+                                </div>
+                            </div>
+                            <div class="portal-list" id="taskList"></div>
+                        </article>
+
+                        <article class="portal-card" id="notifications">
+                            <div class="portal-collection__header">
+                                <div>
+                                    <h2 class="portal-card__title">Powiadomienia</h2>
+                                    <p class="portal-helper">Nowe wiadomości, akceptacje i zmiany statusów.</p>
+                                </div>
+                                <button type="button" class="btn btn--ghost" id="markNotificationsRead">Oznacz jako przeczytane</button>
+                            </div>
+                            <div class="portal-notification-list" id="notificationList"></div>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="portal-grid">
+                    <article class="portal-card">
+                        <div class="portal-collection__header">
+                            <div>
+                                <h2 class="portal-card__title">Recent activity</h2>
+                                <p class="portal-helper">Automatyczny log działań w projekcie.</p>
+                            </div>
+                        </div>
+                        <div class="portal-activity-list" id="activityList"></div>
+                    </article>
+
+                    <article class="portal-card">
+                        <div class="portal-collection__header">
+                            <div>
+                                <h2 class="portal-card__title">Pending approvals</h2>
+                                <p class="portal-helper">Etapy i deliverables, które wymagają uwagi.</p>
+                            </div>
+                        </div>
+                        <div class="portal-list" id="approvalList"></div>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import {
+            apiFetch,
+            bindLogoutButtons,
+            bindSidebarToggle,
+            createListMarkup,
+            escapeHtml,
+            formatDate,
+            hydrateUserShell,
+            renderBadge,
+            renderProjectLink,
+            requirePortalUser,
+            statusLabel
+        } from '/portal/shared.js';
+
+        const summaryCards = document.getElementById('summaryCards');
+        const projectList = document.getElementById('projectList');
+        const taskList = document.getElementById('taskList');
+        const notificationList = document.getElementById('notificationList');
+        const activityList = document.getElementById('activityList');
+        const approvalList = document.getElementById('approvalList');
+
+        async function loadDashboard() {
+            const user = await requirePortalUser();
+            if (!user) return;
+
+            hydrateUserShell(user);
+            bindSidebarToggle();
+            bindLogoutButtons();
+
+            const data = await apiFetch('/api/dashboard', { method: 'GET' });
+
+            summaryCards.innerHTML = `
+                <article class="portal-card portal-stat">
+                    <div class="portal-stat__value">${data.summary.activeProjects}</div>
+                    <div class="portal-stat__label">Aktywne projekty</div>
+                    <div class="portal-stat__delta">Wszystkie projekty w toku</div>
+                </article>
+                <article class="portal-card portal-stat">
+                    <div class="portal-stat__value">${data.summary.completedProjects}</div>
+                    <div class="portal-stat__label">Zakończone projekty</div>
+                    <div class="portal-stat__delta">Historia zakończonych wdrożeń</div>
+                </article>
+                <article class="portal-card portal-stat">
+                    <div class="portal-stat__value">${data.summary.pendingTasks}</div>
+                    <div class="portal-stat__label">Pending tasks</div>
+                    <div class="portal-stat__delta">Rzeczy oczekujące na reakcję</div>
+                </article>
+                <article class="portal-card portal-stat">
+                    <div class="portal-stat__value">${data.summary.unreadMessages}</div>
+                    <div class="portal-stat__label">Nieprzeczytane wiadomości</div>
+                    <div class="portal-stat__delta">Nowe wpisy w wątkach projektowych</div>
+                </article>
+            `;
+
+            projectList.innerHTML = createListMarkup(
+                data.projects,
+                (project) => `
+                    <article class="portal-project">
+                        <div class="portal-project__header">
+                            <div>
+                                <div class="portal-project__title">${escapeHtml(project.name)}</div>
+                                <div class="portal-inline-meta">
+                                    ${renderBadge(statusLabel(project.status), project.status)}
+                                    <span>Następny milestone: ${escapeHtml(project.nextMilestone || 'Brak')}</span>
+                                </div>
+                            </div>
+                            <div class="portal-kpi">
+                                <div class="portal-kpi__label">Postęp</div>
+                                <div class="portal-kpi__value">${project.progressPercent}%</div>
+                            </div>
+                        </div>
+                        <div class="portal-progress">
+                            <div class="portal-progress__bar" style="width: ${project.progressPercent}%;"></div>
+                        </div>
+                        <div class="portal-project__footer">
+                            <div class="portal-project__meta">
+                                <span>Last activity: ${formatDate(project.lastActivity)}</span>
+                                <span>Pending tasks: ${project.pendingTasks}</span>
+                            </div>
+                            ${renderProjectLink(project.id)}
+                        </div>
+                    </article>
+                `,
+                'Brak projektów przypisanych do tego konta.'
+            );
+
+            const primaryProjectLink = document.getElementById('primaryProjectLink');
+            if (data.projects[0]) {
+                primaryProjectLink.href = `/portal/project/?id=${encodeURIComponent(data.projects[0].id)}`;
+            } else {
+                primaryProjectLink.href = '/portal/';
+                primaryProjectLink.classList.add('btn--secondary');
+                primaryProjectLink.classList.remove('btn--primary');
+                primaryProjectLink.textContent = 'Brak aktywnego projektu';
+            }
+
+            taskList.innerHTML = createListMarkup(
+                data.pendingTasks,
+                (task) => `
+                    <div class="portal-list__item">
+                        <strong>${escapeHtml(task.title)}</strong>
+                        <p class="portal-muted">${escapeHtml(task.projectName)}</p>
+                    </div>
+                `,
+                'Brak zaległych zadań.'
+            );
+
+            notificationList.innerHTML = createListMarkup(
+                data.notifications,
+                (notification) => `
+                    <article class="portal-notification">
+                        <div class="portal-notification__header">
+                            <div>
+                                <strong>${escapeHtml(notification.title)}</strong>
+                                <div class="portal-muted">${formatDate(notification.createdAt)}</div>
+                            </div>
+                            ${notification.readAt ? renderBadge('Przeczytane', 'COMPLETED', 'portal-badge--success') : renderBadge('Nowe', 'ACTIVE')}
+                        </div>
+                        <div class="portal-notification__body">${escapeHtml(notification.body)}</div>
+                        ${notification.link ? `<div style="margin-top: 1rem;"><a href="${notification.link}" class="btn btn--ghost">Otwórz</a></div>` : ''}
+                    </article>
+                `,
+                'Brak powiadomień.'
+            );
+
+            activityList.innerHTML = createListMarkup(
+                data.recentActivity,
+                (activity) => `
+                    <article class="portal-activity-item">
+                        <div class="portal-activity-item__header">
+                            <div>
+                                <strong>${escapeHtml(activity.eventType.replaceAll('_', ' '))}</strong>
+                                <div class="portal-muted">${escapeHtml(activity.project?.name || '')}</div>
+                            </div>
+                            <span class="portal-muted">${formatDate(activity.createdAt)}</span>
+                        </div>
+                        <div class="portal-muted">${activity.actor ? `${escapeHtml(activity.actor.name)} · ${escapeHtml(activity.actor.role)}` : 'System'}</div>
+                    </article>
+                `,
+                'Brak aktywności.'
+            );
+
+            approvalList.innerHTML = createListMarkup(
+                data.pendingApprovals,
+                (item) => `
+                    <div class="portal-list__item">
+                        <strong>${escapeHtml(item.title || item.name || 'Akceptacja')}</strong>
+                        <p class="portal-muted">${escapeHtml(item.projectName)}</p>
+                    </div>
+                `,
+                'Brak oczekujących akceptacji.'
+            );
+
+            document.getElementById('markNotificationsRead').onclick = async () => {
+                await apiFetch('/api/notifications', {
+                    method: 'POST',
+                    body: JSON.stringify({ markAll: true })
+                });
+                loadDashboard();
+            };
+        }
+
+        loadDashboard().catch((error) => {
+            console.error(error);
+        });
+    </script>
+</body>
+</html>

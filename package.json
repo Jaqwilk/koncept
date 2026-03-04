@@ -1,0 +1,26 @@
+{
+  "name": "koncept-agency",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "@vercel/blob": "^2.3.0",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
+    "prisma": "^6.7.0",
+    "resend": "^4.1.2",
+    "slugify": "^1.6.6",
+    "zod": "^3.24.2"
+  }
+}
