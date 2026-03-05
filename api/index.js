@@ -114,69 +114,44 @@ async function loadRoute(path) {
   return mod.default;
 }
 
+function sendNodeJson(nodeRes, status, payload) {
+  nodeRes.statusCode = status;
+  nodeRes.setHeader('content-type', 'application/json; charset=utf-8');
+  nodeRes.end(JSON.stringify(payload));
+}
+
 export default async function handler(nodeReq, nodeRes) {
-  const request = await toWebRequest(nodeReq);
-  const path = extractPath(request.url);
-
-  if (!path) {
-    const routes = Object.keys(ROUTE_MODULES).sort();
-    await sendWebResponse(
-      nodeRes,
-      json(
-        {
-          ok: true,
-          message: 'Koncept API router online.',
-          routes
-        },
-        200
-      )
-    );
-    return;
-  }
-
-  let route;
   try {
-    route = await loadRoute(path);
-  } catch (error) {
-    console.error('API route import failure', { path, error });
-    await sendWebResponse(
-      nodeRes,
-      json(
-        {
-          error: 'Nie udało się załadować modułu endpointu.',
-          code: 'ROUTE_IMPORT_FAILED',
-          route: path
-        },
-        500
-      )
-    );
-    return;
-  }
+    const request = await toWebRequest(nodeReq);
+    const path = extractPath(request.url);
 
-  if (!route) {
-    await sendWebResponse(
-      nodeRes,
-      json(
-        {
-          error: `Nieznany endpoint API: ${path}`,
-          code: 'ROUTE_NOT_FOUND',
-          route: path
-        },
-        404
-      )
-    );
-    return;
-  }
-
-  try {
-    const response = await route(request);
-    if (!(response instanceof Response)) {
+    if (!path) {
+      const routes = Object.keys(ROUTE_MODULES).sort();
       await sendWebResponse(
         nodeRes,
         json(
           {
-            error: 'Endpoint zwrócił nieprawidłowy typ odpowiedzi.',
-            code: 'INVALID_HANDLER_RESPONSE',
+            ok: true,
+            message: 'Koncept API router online.',
+            routes
+          },
+          200
+        )
+      );
+      return;
+    }
+
+    let route;
+    try {
+      route = await loadRoute(path);
+    } catch (error) {
+      console.error('API route import failure', { path, error });
+      await sendWebResponse(
+        nodeRes,
+        json(
+          {
+            error: 'Nie udało się załadować modułu endpointu.',
+            code: 'ROUTE_IMPORT_FAILED',
             route: path
           },
           500
@@ -185,19 +160,63 @@ export default async function handler(nodeReq, nodeRes) {
       return;
     }
 
-    await sendWebResponse(nodeRes, response);
+    if (!route) {
+      await sendWebResponse(
+        nodeRes,
+        json(
+          {
+            error: `Nieznany endpoint API: ${path}`,
+            code: 'ROUTE_NOT_FOUND',
+            route: path
+          },
+          404
+        )
+      );
+      return;
+    }
+
+    try {
+      const response = await route(request);
+      if (!(response instanceof Response)) {
+        await sendWebResponse(
+          nodeRes,
+          json(
+            {
+              error: 'Endpoint zwrócił nieprawidłowy typ odpowiedzi.',
+              code: 'INVALID_HANDLER_RESPONSE',
+              route: path
+            },
+            500
+          )
+        );
+        return;
+      }
+
+      await sendWebResponse(nodeRes, response);
+    } catch (error) {
+      console.error('API route execution failure', { path, error });
+      await sendWebResponse(
+        nodeRes,
+        json(
+          {
+            error: 'Błąd wykonania endpointu.',
+            code: 'ROUTE_EXECUTION_FAILED',
+            route: path
+          },
+          500
+        )
+      );
+    }
   } catch (error) {
-    console.error('API route execution failure', { path, error });
-    await sendWebResponse(
-      nodeRes,
-      json(
-        {
-          error: 'Błąd wykonania endpointu.',
-          code: 'ROUTE_EXECUTION_FAILED',
-          route: path
-        },
-        500
-      )
-    );
+    console.error('API bootstrap failure', error);
+    try {
+      sendNodeJson(nodeRes, 500, {
+        error: 'Błąd inicjalizacji API.',
+        code: 'API_BOOTSTRAP_FAILED'
+      });
+    } catch (responseError) {
+      nodeRes.statusCode = 500;
+      nodeRes.end('API bootstrap failed');
+    }
   }
 }
