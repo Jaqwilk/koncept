@@ -35,6 +35,26 @@ export function handleApiError(error) {
     return json({ error: error.message, details: error.details }, error.status);
   }
 
+  if (error?.name === 'PrismaClientInitializationError') {
+    return json(
+      {
+        error: 'Brak połączenia z bazą danych.',
+        code: 'DATABASE_UNAVAILABLE'
+      },
+      503
+    );
+  }
+
+  if (error?.name === 'PrismaClientKnownRequestError' && (error?.code === 'P1001' || error?.code === 'P1002')) {
+    return json(
+      {
+        error: 'Nie można połączyć się z bazą danych.',
+        code: 'DATABASE_UNAVAILABLE'
+      },
+      503
+    );
+  }
+
   if (error && error.name === 'ZodError') {
     const details = Array.isArray(error.issues)
       ? error.issues.map((item) => ({
