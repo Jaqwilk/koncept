@@ -35,7 +35,23 @@ export function handleApiError(error) {
     return json({ error: error.message, details: error.details }, error.status);
   }
 
-  console.error(error);
+  if (error && error.name === 'ZodError') {
+    const details = Array.isArray(error.issues)
+      ? error.issues.map((item) => ({
+          path: Array.isArray(item.path) ? item.path.join('.') : '',
+          message: item.message
+        }))
+      : null;
+
+    return json({ error: 'Nieprawidłowe dane wejściowe.', details }, 400);
+  }
+
+  try {
+    console.error(error);
+  } catch (loggingError) {
+    console.error('Nie udało się zalogować błędu w handleApiError.');
+  }
+
   return json({ error: 'Wystąpił nieoczekiwany błąd serwera.' }, 500);
 }
 

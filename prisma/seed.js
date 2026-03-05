@@ -2,6 +2,11 @@ import bcrypt from 'bcryptjs';
 import { PrismaClient, Role, UserStatus, ProjectStatus, TaskStatus, WorkflowStatus, FeedbackStatus, ApprovalStatus, InvoiceStatus, NotificationType, FileCategory, FileFolder, ProjectMembershipRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
+const isProductionLike = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+
+if (isProductionLike && process.env.ALLOW_DEMO_SEED !== 'true') {
+  throw new Error('Demo seed jest zablokowany w środowisku produkcyjnym. Użyj: npm run seed:admin');
+}
 
 async function createTask(projectId, sortOrder, taskKey, title, description, status = TaskStatus.PENDING) {
   return prisma.task.create({

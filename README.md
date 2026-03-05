@@ -74,10 +74,10 @@ npm run prisma:generate
 npm run prisma:migrate
 ```
 
-4. Zasil bazę danymi demo:
+4. Zasil bazę danymi demo (lokalnie):
 
 ```bash
-npm run seed
+npm run seed:demo
 ```
 
 5. Uruchom lokalnie:
@@ -97,6 +97,9 @@ npm run dev
 - `EMAIL_FROM`
 - `ENABLE_EMAIL_NOTIFICATIONS`
 - `MAX_UPLOAD_MB`
+- `BOOTSTRAP_ADMIN_EMAIL`
+- `BOOTSTRAP_ADMIN_NAME`
+- `BOOTSTRAP_ADMIN_PASSWORD`
 
 ## Konta demo po seedzie
 
@@ -104,8 +107,26 @@ npm run dev
 - `team@koncept.pl` / `demo12345`
 - `client@koncept.pl` / `demo12345`
 
+## Produkcja - bezpieczna inicjalizacja
+
+Do produkcji nie używaj demo seeda.
+
+1. Wdróż migracje:
+
+```bash
+npm run prisma:deploy
+```
+
+2. Utwórz tylko konto admina:
+
+```bash
+npm run seed:admin
+```
+
 ## Najważniejsze endpointy portalu
 
+- `GET /api/health`
+- `GET /api/health-db`
 - `POST /api/auth-login`
 - `POST /api/auth-logout`
 - `GET /api/auth-me`
