@@ -1,6 +1,16 @@
+import { z } from 'zod';
 import { requireUser } from './_lib/auth.js';
 import { prisma } from './_lib/db.js';
 import { ensureMethod, handleApiError, json, readJson } from './_lib/http.js';
+
+const updateSchema = z
+  .object({
+    markAll: z.boolean().optional(),
+    notificationId: z.string().trim().min(1).optional()
+  })
+  .refine((value) => Boolean(value.markAll) || Boolean(value.notificationId), {
+    message: 'Brakuje notificationId lub markAll.'
+  });
 
 export default async function handler(request) {
   try {
@@ -17,7 +27,7 @@ export default async function handler(request) {
     }
 
     ensureMethod(request, ['POST']);
-    const body = await readJson(request);
+    const body = updateSchema.parse(await readJson(request));
 
     if (body.markAll) {
       await prisma.notification.updateMany({

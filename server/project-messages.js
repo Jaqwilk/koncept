@@ -53,9 +53,21 @@ export default async function handler(request) {
       }
     });
 
-    if (body.attachmentFileIds.length) {
+    const attachmentFileIds = Array.from(new Set(body.attachmentFileIds.filter(Boolean)));
+    if (attachmentFileIds.length) {
+      const validAttachmentCount = await prisma.fileAsset.count({
+        where: {
+          id: { in: attachmentFileIds },
+          projectId: body.projectId
+        }
+      });
+
+      if (validAttachmentCount !== attachmentFileIds.length) {
+        throw new ApiError(400, 'Jeden z załączników nie należy do tego projektu.');
+      }
+
       await prisma.messageAttachment.createMany({
-        data: body.attachmentFileIds.map((fileId) => ({
+        data: attachmentFileIds.map((fileId) => ({
           messageId: message.id,
           fileId
         }))

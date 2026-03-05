@@ -257,7 +257,11 @@
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-                setFlash(flash, `Zaproszenie zostało wysłane. Link roboczy: ${result.inviteUrl}`, 'success');
+                if (result.emailSent === false) {
+                    setFlash(flash, `Zaproszenie utworzone, ale e-mail nie został wysłany. Użyj linku: ${result.inviteUrl}`, 'error');
+                } else {
+                    setFlash(flash, `Zaproszenie zostało wysłane. Link roboczy: ${result.inviteUrl}`, 'success');
+                }
                 inviteForm.reset();
                 await loadAdmin();
             } catch (error) {

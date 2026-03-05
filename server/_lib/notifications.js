@@ -40,14 +40,22 @@ export async function notifyProjectMembers({
   });
 
   await Promise.all(
-    recipients.map((membership) =>
-      sendNotificationEmail({
-        to: membership.user.email,
-        subject: title,
-        title,
-        body,
-        link: link ? `${process.env.APP_BASE_URL || ''}${link}` : null
-      })
-    )
+    recipients.map(async (membership) => {
+      try {
+        await sendNotificationEmail({
+          to: membership.user.email,
+          subject: title,
+          title,
+          body,
+          link: link ? `${process.env.APP_BASE_URL || ''}${link}` : null
+        });
+      } catch (error) {
+        console.error('Notification email send failed', {
+          userId: membership.userId,
+          projectId,
+          type
+        });
+      }
+    })
   );
 }

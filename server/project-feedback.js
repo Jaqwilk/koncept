@@ -32,6 +32,20 @@ export default async function handler(request) {
     const project = await ensureProjectAccess(user, body.projectId);
 
     if (body.action === 'create') {
+      if (body.attachmentFileId) {
+        const attachment = await prisma.fileAsset.findFirst({
+          where: {
+            id: body.attachmentFileId,
+            projectId: body.projectId
+          },
+          select: { id: true }
+        });
+
+        if (!attachment) {
+          throw new ApiError(400, 'Załączony plik nie należy do tego projektu.');
+        }
+      }
+
       const feedback = await prisma.feedbackItem.create({
         data: {
           projectId: body.projectId,

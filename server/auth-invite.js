@@ -50,13 +50,22 @@ export default async function handler(request) {
     const baseUrl = process.env.APP_BASE_URL || new URL(request.url).origin;
     const inviteUrl = `${baseUrl}/portal/invite/?token=${token}`;
 
-    await sendInviteEmail({
-      email: body.email,
-      name: body.name,
-      inviteUrl,
-      roleLabel: ROLE_LABELS[body.role],
-      projectName: project?.name
-    });
+    let emailSent = true;
+    try {
+      await sendInviteEmail({
+        email: body.email,
+        name: body.name,
+        inviteUrl,
+        roleLabel: ROLE_LABELS[body.role],
+        projectName: project?.name
+      });
+    } catch (error) {
+      emailSent = false;
+      console.error('Invite email send failed', {
+        email: body.email,
+        projectId: body.projectId || null
+      });
+    }
 
     if (project) {
       await recordActivity({
@@ -73,7 +82,8 @@ export default async function handler(request) {
 
     return json({
       ok: true,
-      inviteUrl
+      inviteUrl,
+      emailSent
     });
   } catch (error) {
     return handleApiError(error);

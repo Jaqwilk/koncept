@@ -1,4 +1,5 @@
 import slugify from 'slugify';
+import { z } from 'zod';
 import { requireUser } from './_lib/auth.js';
 import { prisma } from './_lib/db.js';
 import { ensureProjectAccess } from './_lib/permissions.js';
@@ -12,17 +13,48 @@ function safeVersionGroup(category, displayName) {
   return slugify(`${category}-${displayName}`, { lower: true, strict: true });
 }
 
+const fileCategorySchema = z.enum([
+  'LOGO',
+  'IMAGES',
+  'BRAND_ASSETS',
+  'TEXT_CONTENT',
+  'COMPANY_INFORMATION',
+  'OTHER',
+  'DELIVERABLE',
+  'DOCUMENT',
+  'INVOICE',
+  'CONTRACT'
+]);
+
+const fileFolderSchema = z.enum(['MATERIALS', 'DESIGN_FILES', 'WEBSITE_ASSETS', 'DOCUMENTS', 'CONTRACTS', 'DELIVERABLES', 'INVOICES']);
+
+const commentSchema = z.object({
+  projectId: z.string().trim().min(1),
+  fileId: z.string().trim().min(1),
+  comment: z.string().trim().min(1).max(4000)
+});
+
+const uploadSchema = z.object({
+  projectId: z.string().trim().min(1),
+  category: fileCategorySchema.default('OTHER'),
+  folder: fileFolderSchema.default('MATERIALS'),
+  displayName: z.string().trim().max(160).optional().default(''),
+  versionGroup: z.string().trim().max(160).optional().default(''),
+  comment: z.string().trim().max(4000).optional().default(''),
+  replacedFileId: z.string().trim().optional().default('')
+});
+
 export default async function handler(request) {
   try {
     if (request.method === 'POST' && (request.headers.get('content-type') || '').includes('application/json')) {
       const user = await requireUser(request);
-      const { projectId, fileId, comment } = await request.json();
-      await ensureProjectAccess(user, projectId);
+      const body = commentSchema.parse(await request.json());
+      await ensureProjectAccess(user, body.projectId);
 
       const file = await prisma.fileAsset.findFirst({
         where: {
-          id: fileId,
-          projectId
+          id: body.fileId,
+          projectId: body.projectId
         }
       });
 
@@ -30,14 +62,14 @@ export default async function handler(request) {
 
       const fileComment = await prisma.fileComment.create({
         data: {
-          fileId,
+          fileId: body.fileId,
           authorId: user.id,
-          body: String(comment || '').trim()
+          body: body.comment
         }
       });
 
       await recordActivity({
-        projectId,
+        projectId: body.projectId,
         actorId: user.id,
         eventType: 'FILE_COMMENT_ADDED',
         entityType: 'FILE_COMMENT',
@@ -50,40 +82,46 @@ export default async function handler(request) {
     ensureMethod(request, ['POST']);
     const user = await requireUser(request);
     const formData = await request.formData();
-    const projectId = String(formData.get('projectId') || '');
-    const category = String(formData.get('category') || 'OTHER');
-    const folder = String(formData.get('folder') || 'MATERIALS');
-    const displayName = String(formData.get('displayName') || '');
-    const versionGroupInput = String(formData.get('versionGroup') || '');
-    const comment = String(formData.get('comment') || '');
-    const replacedFileId = String(formData.get('replacedFileId') || '');
+    const body = uploadSchema.parse({
+      projectId: String(formData.get('projectId') || ''),
+      category: String(formData.get('category') || 'OTHER'),
+      folder: String(formData.get('folder') || 'MATERIALS'),
+      displayName: String(formData.get('displayName') || ''),
+      versionGroup: String(formData.get('versionGroup') || ''),
+      comment: String(formData.get('comment') || ''),
+      replacedFileId: String(formData.get('replacedFileId') || '')
+    });
     const file = formData.get('file');
 
-    if (!projectId || !(file instanceof File)) {
+    if (!(file instanceof File)) {
       throw new ApiError(400, 'Brakuje projektu lub pliku.');
     }
 
-    const project = await ensureProjectAccess(user, projectId);
+    const project = await ensureProjectAccess(user, body.projectId);
     const upload = await uploadProjectFile({
-      projectId,
-      folder,
+      projectId: body.projectId,
+      folder: body.folder,
       file
     });
 
     let replacedFile = null;
-    if (replacedFileId) {
+    if (body.replacedFileId) {
       replacedFile = await prisma.fileAsset.findFirst({
         where: {
-          id: replacedFileId,
-          projectId
+          id: body.replacedFileId,
+          projectId: body.projectId
         }
       });
+
+      if (!replacedFile) {
+        throw new ApiError(404, 'Nie znaleziono pliku do podmiany.');
+      }
     }
 
-    const versionGroup = versionGroupInput || safeVersionGroup(category, displayName || file.name);
+    const versionGroup = body.versionGroup || safeVersionGroup(body.category, body.displayName || file.name);
     const currentVersion = await prisma.fileAsset.findFirst({
       where: {
-        projectId,
+        projectId: body.projectId,
         versionGroup,
         isCurrentVersion: true
       },
@@ -101,10 +139,10 @@ export default async function handler(request) {
 
     const storedFile = await prisma.fileAsset.create({
       data: {
-        projectId,
-        category,
-        folder,
-        displayName: displayName || file.name,
+        projectId: body.projectId,
+        category: body.category,
+        folder: body.folder,
+        displayName: body.displayName || file.name,
         blobUrl: upload.url,
         blobDownloadUrl: upload.downloadUrl,
         blobPath: upload.pathname,
@@ -117,38 +155,38 @@ export default async function handler(request) {
       }
     });
 
-    if (comment) {
+    if (body.comment) {
       await prisma.fileComment.create({
         data: {
           fileId: storedFile.id,
           authorId: user.id,
-          body: comment
+          body: body.comment
         }
       });
     }
 
-    await syncProjectTasks(projectId);
+    await syncProjectTasks(body.projectId);
 
     await recordActivity({
-      projectId,
+      projectId: body.projectId,
       actorId: user.id,
       eventType: currentVersion ? 'FILE_REPLACED' : 'FILE_UPLOADED',
       entityType: 'FILE',
       entityId: storedFile.id,
       metadata: {
-        category,
+        category: body.category,
         displayName: storedFile.displayName,
         version: storedFile.versionNumber
       }
     });
 
     await notifyProjectMembers({
-      projectId,
+      projectId: body.projectId,
       actorId: user.id,
       type: 'FILE_UPLOADED',
       title: 'Nowy plik w projekcie',
       body: `${user.name} dodał plik "${storedFile.displayName}" w projekcie ${project.name}.`,
-      link: `/portal/project/?id=${projectId}#materials`
+      link: `/portal/project/?id=${body.projectId}#materials`
     });
 
     return json({ ok: true, file: storedFile });

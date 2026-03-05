@@ -79,6 +79,14 @@ export default async function handler(request) {
       throw new ApiError(404, 'Nie znaleziono prośby o akceptację.');
     }
 
+    if (isTeam(user)) {
+      throw new ApiError(403, 'Akceptacji etapu dokonuje klient projektu.');
+    }
+
+    if (approval.status !== 'PENDING') {
+      throw new ApiError(409, 'Ta prośba o akceptację została już obsłużona.');
+    }
+
     const updatedApproval = await prisma.approvalRequest.update({
       where: { id: approval.id },
       data: {
