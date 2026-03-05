@@ -1,25 +1,47 @@
-const ROUTE_MODULES = {
-  'admin-overview': '../server/admin-overview.js',
-  'admin-projects': '../server/admin-projects.js',
-  'auth-accept-invite': '../server/auth-accept-invite.js',
-  'auth-invite': '../server/auth-invite.js',
-  'auth-login': '../server/auth-login.js',
-  'auth-logout': '../server/auth-logout.js',
-  'auth-me': '../server/auth-me.js',
-  dashboard: '../server/dashboard.js',
-  'file-download': '../server/file-download.js',
-  notifications: '../server/notifications.js',
-  'project-approvals': '../server/project-approvals.js',
-  'project-brief': '../server/project-brief.js',
-  'project-feedback': '../server/project-feedback.js',
-  'project-files': '../server/project-files.js',
-  'project-invoices': '../server/project-invoices.js',
-  'project-messages': '../server/project-messages.js',
-  'project-stages': '../server/project-stages.js',
-  'project-tasks': '../server/project-tasks.js',
-  'project-workspace': '../server/project-workspace.js',
-  health: '../server/health.js',
-  'health-db': '../server/health-db.js'
+import adminOverview from '../server/admin-overview.js';
+import adminProjects from '../server/admin-projects.js';
+import authAcceptInvite from '../server/auth-accept-invite.js';
+import authInvite from '../server/auth-invite.js';
+import authLogin from '../server/auth-login.js';
+import authLogout from '../server/auth-logout.js';
+import authMe from '../server/auth-me.js';
+import dashboard from '../server/dashboard.js';
+import fileDownload from '../server/file-download.js';
+import healthDb from '../server/health-db.js';
+import health from '../server/health.js';
+import notifications from '../server/notifications.js';
+import projectApprovals from '../server/project-approvals.js';
+import projectBrief from '../server/project-brief.js';
+import projectFeedback from '../server/project-feedback.js';
+import projectFiles from '../server/project-files.js';
+import projectInvoices from '../server/project-invoices.js';
+import projectMessages from '../server/project-messages.js';
+import projectStages from '../server/project-stages.js';
+import projectTasks from '../server/project-tasks.js';
+import projectWorkspace from '../server/project-workspace.js';
+
+const ROUTE_HANDLERS = {
+  'admin-overview': adminOverview,
+  'admin-projects': adminProjects,
+  'auth-accept-invite': authAcceptInvite,
+  'auth-invite': authInvite,
+  'auth-login': authLogin,
+  'auth-logout': authLogout,
+  'auth-me': authMe,
+  dashboard,
+  'file-download': fileDownload,
+  notifications,
+  'project-approvals': projectApprovals,
+  'project-brief': projectBrief,
+  'project-feedback': projectFeedback,
+  'project-files': projectFiles,
+  'project-invoices': projectInvoices,
+  'project-messages': projectMessages,
+  'project-stages': projectStages,
+  'project-tasks': projectTasks,
+  'project-workspace': projectWorkspace,
+  health,
+  'health-db': healthDb
 };
 
 const NO_BODY_METHODS = new Set(['GET', 'HEAD']);
@@ -107,13 +129,6 @@ async function sendWebResponse(nodeRes, webResponse) {
   nodeRes.end(payload);
 }
 
-async function loadRoute(path) {
-  const modulePath = ROUTE_MODULES[path];
-  if (!modulePath) return null;
-  const mod = await import(modulePath);
-  return mod.default;
-}
-
 function sendNodeJson(nodeRes, status, payload) {
   nodeRes.statusCode = status;
   nodeRes.setHeader('content-type', 'application/json; charset=utf-8');
@@ -126,7 +141,7 @@ export default async function handler(nodeReq, nodeRes) {
     const path = extractPath(request.url);
 
     if (!path) {
-      const routes = Object.keys(ROUTE_MODULES).sort();
+      const routes = Object.keys(ROUTE_HANDLERS).sort();
       await sendWebResponse(
         nodeRes,
         json(
@@ -141,24 +156,7 @@ export default async function handler(nodeReq, nodeRes) {
       return;
     }
 
-    let route;
-    try {
-      route = await loadRoute(path);
-    } catch (error) {
-      console.error('API route import failure', { path, error });
-      await sendWebResponse(
-        nodeRes,
-        json(
-          {
-            error: 'Nie udało się załadować modułu endpointu.',
-            code: 'ROUTE_IMPORT_FAILED',
-            route: path
-          },
-          500
-        )
-      );
-      return;
-    }
+    const route = ROUTE_HANDLERS[path] ?? null;
 
     if (!route) {
       await sendWebResponse(
