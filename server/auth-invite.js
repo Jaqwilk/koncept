@@ -50,15 +50,18 @@ export default async function handler(request) {
     const baseUrl = process.env.APP_BASE_URL || new URL(request.url).origin;
     const inviteUrl = `${baseUrl}/portal/invite/?token=${token}`;
 
-    let emailSent = true;
+    let emailSent = false;
     try {
-      await sendInviteEmail({
+      emailSent = await sendInviteEmail({
         email: body.email,
         name: body.name,
         inviteUrl,
         roleLabel: ROLE_LABELS[body.role],
         projectName: project?.name
       });
+      if (!emailSent) {
+        console.warn('Invite email skipped because email delivery is disabled.');
+      }
     } catch (error) {
       emailSent = false;
       console.error('Invite email send failed', {

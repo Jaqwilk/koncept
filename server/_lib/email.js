@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-function isEmailEnabled() {
+export function isEmailEnabled() {
   return Boolean(process.env.RESEND_API_KEY) && process.env.ENABLE_EMAIL_NOTIFICATIONS !== 'false';
 }
 
@@ -11,7 +11,7 @@ function getClient() {
 
 export async function sendEmail({ to, subject, html }) {
   const client = getClient();
-  if (!client) return;
+  if (!client) return false;
 
   await client.emails.send({
     from: process.env.EMAIL_FROM || 'Koncept <portal@koncept.pl>',
@@ -19,11 +19,13 @@ export async function sendEmail({ to, subject, html }) {
     subject,
     html
   });
+
+  return true;
 }
 
 export async function sendInviteEmail({ email, name, inviteUrl, roleLabel, projectName }) {
   const greeting = name ? `Cześć ${name},` : 'Cześć,';
-  await sendEmail({
+  return sendEmail({
     to: email,
     subject: 'Zaproszenie do portalu klienta Koncept',
     html: `
@@ -37,7 +39,7 @@ export async function sendInviteEmail({ email, name, inviteUrl, roleLabel, proje
 }
 
 export async function sendNotificationEmail({ to, subject, title, body, link }) {
-  await sendEmail({
+  return sendEmail({
     to,
     subject,
     html: `
