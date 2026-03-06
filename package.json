@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vercel dev",
     "build": "npm run prisma:generate && npm run build:static",
+    "build:vercel": "npm run prisma:deploy && npm run build",
     "build:static": "node scripts/build-static.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
